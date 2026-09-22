@@ -21,7 +21,16 @@ import type {
   VerifyBody,
 } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+/**
+ * API base resolution:
+ *  - explicit NEXT_PUBLIC_API_URL always wins (local dev points it at :8000)
+ *  - on Vercel, the same-origin rewrite /api/backend/* proxies to the FastAPI
+ *    service, so the browser never needs a second origin (and CORS is moot)
+ *  - bare local dev falls back to http://localhost:8000
+ */
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.VERCEL ? "/api/backend" : "http://localhost:8000");
 
 export class ApiError extends Error {
   status: number;
@@ -41,9 +50,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         ...(isForm ? {} : { "Content-Type": "application/json" }),
         ...(init?.headers || {}),
       },
+      ...(API_URL.startsWith("/") ? {} : { mode: "cors" as RequestMode }),
     });
   } catch {
-    throw new ApiError(0, "Cannot reach the CIVICOS backend (port 8000). Start it with: cd backend && python -m uvicorn app.main:app --port 8000");
+    throw new ApiError(0, "Cannot reach the CIVICOS backend. Check your connection and try again.");
   }
   if (!res.ok) {
     let msg = `Request failed (${res.status})`;

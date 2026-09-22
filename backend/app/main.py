@@ -26,6 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Locally the API lives at /api/*. On Vercel the frontend proxies same-origin
+# /api/backend/* straight to this service, so mount the same routers under
+# both prefixes — requests carry whichever prefix their origin uses.
 for router in (core.router, incidents.router, reports.router, verify.router,
                complaints.router, notifications.router, ops.router):
     app.include_router(router, prefix="/api")
+    app.include_router(router, prefix="/api/backend")

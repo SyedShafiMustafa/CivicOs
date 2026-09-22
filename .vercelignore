@@ -9,12 +9,14 @@ next-env.d.ts
 __pycache__/
 *.pyc
 .venv/
+backend/.venv/
 
 .env
 .env.local
 .env*.local
 
 .freebuff/
+.git/
 
 .DS_Store
 *.log
