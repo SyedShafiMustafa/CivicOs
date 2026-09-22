@@ -22,15 +22,14 @@ import type {
 } from "./types";
 
 /**
- * API base resolution:
- *  - explicit NEXT_PUBLIC_API_URL always wins (local dev points it at :8000)
- *  - on Vercel, the same-origin rewrite /api/backend/* proxies to the FastAPI
- *    service, so the browser never needs a second origin (and CORS is moot)
- *  - bare local dev falls back to http://localhost:8000
+ * API base resolution — NEXT_PUBLIC_* vars are inlined at BUILD time, so this
+ * needs no runtime env detection:
+ *  - production (.env.production, committed): same-origin /api/backend, which
+ *    the Vercel services rewrite proxies to the FastAPI service
+ *  - local dev: .env.local (not committed) sets the direct http://localhost:8000
+ *  - an explicit NEXT_PUBLIC_API_URL in the environment always wins
  */
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.VERCEL ? "/api/backend" : "http://localhost:8000");
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
 
 export class ApiError extends Error {
   status: number;

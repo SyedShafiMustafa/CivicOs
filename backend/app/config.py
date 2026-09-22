@@ -26,6 +26,11 @@ FRONTEND_ORIGINS = [
 # The prototype has no auth; a single demo citizen is assumed.
 DEMO_USER_ID = "u-tanisha"
 
+# Origin that serves public/evidence and public/avatars for the demo imagery.
+# Defaults to the local desktop host; on Vercel set this to the deployment URL
+# (or any host serving the frontend's public/ directory).
+ASSET_ORIGIN = os.getenv("ASSET_ORIGIN", "http://localhost:3000").rstrip("/")
+
 # Demo user's approximate home location (Banjara Hills, Hyderabad).
 USER_LOCATION = (17.4127, 78.4350)
 

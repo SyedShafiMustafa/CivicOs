@@ -483,7 +483,9 @@ def frame_data_uri(kind: str, seed: str) -> str:
 
 import urllib.request  # noqa: E402  (stdlib, used only at import time below)
 
-_PHOTO_ROOT = ("http://localhost:3000", "/evidence")  # any frontend host serves public/
+from app import config  # noqa: E402
+
+_PHOTO_ROOT = (config.ASSET_ORIGIN, "/evidence")
 
 # kind -> photo filename patterns to try, in order
 _PHOTO_POOLS: dict[str, list[str]] = {
@@ -497,7 +499,7 @@ _PHOTO_POOLS: dict[str, list[str]] = {
     "after-clean": [f"after-clean-{i}" for i in range(1, 3)],
 }
 
-_AVATAR_ROOT = ("http://localhost:3000", "/avatars")
+_AVATAR_ROOT = (config.ASSET_ORIGIN, "/avatars")
 
 
 def _local_url(root: tuple[str, str], name: str) -> str:
