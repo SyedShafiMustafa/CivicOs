@@ -23,10 +23,11 @@ import type {
 
 /**
  * API base resolution — NEXT_PUBLIC_* vars are inlined at BUILD time, so this
- * needs no runtime env detection:
+ * needs no runtime env detection. API_URL is the FULL prefix before endpoint
+ * paths ("/stats/overview" etc.):
  *  - production (.env.production, committed): same-origin /api/backend, which
  *    the Vercel services rewrite proxies to the FastAPI service
- *  - local dev: .env.local (not committed) sets the direct http://localhost:8000
+ *  - local dev: .env.local (not committed) sets http://localhost:8000/api
  *  - an explicit NEXT_PUBLIC_API_URL in the environment always wins
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
@@ -43,7 +44,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   const isForm = init?.body instanceof FormData;
   try {
-    res = await fetch(`${API_URL}/api${path}`, {
+    res = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
         ...(isForm ? {} : { "Content-Type": "application/json" }),
