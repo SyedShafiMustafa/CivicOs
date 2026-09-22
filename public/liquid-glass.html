@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Aura · Liquid Glass</title>
+<style>
+  /* ================================================================
+     AURA — premium iOS liquid-glass prototype inside an iPhone 16 Pro
+     Single self-contained file. No dependencies.
+     ================================================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-fill: rgba(255, 255, 255, 0.12);
+    --glass-fill-strong: rgba(255, 255, 255, 0.18);
+    --rim: rgba(255, 255, 255, 0.25);
+    --sheen: inset 0 1px 1px 0 rgba(255, 255, 255, 0.5);
+    --ambient: 0 16px 40px rgba(0, 0, 0, 0.2);
+    --text: rgba(255, 255, 255, 0.95);
+    --text-dim: rgba(255, 255, 255, 0.62);
+    --text-faint: rgba(255, 255, 255, 0.38);
+    --indigo: #6366F1;
+    --magenta: #EC4899;
+    --amber: #F59E0B;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0b0a10;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Studio stage & device scaler ---------- */
+  .stage { display: flex; align-items: center; justify-content: center; height: 100dvh; width: 100vw; }
+  .device-scale { transform: scale(var(--scale, 1)); transform-origin: center center; }
+
+  /* ---------- iPhone 16 Pro frame ---------- */
+  .iphone {
+    position: relative;
+    width: 430px; height: 902px;              /* 402×874 screen + titanium bezel */
+    border-radius: 62px;
+    background: linear-gradient(145deg, #3a3d44 0%, #14161b 30%, #23262d 60%, #0e1013 100%);
+    padding: 14px;
+    box-shadow:
+      0 0 0 1.5px rgba(255,255,255,0.18),
+      0 2px 6px rgba(255,255,255,0.06) inset,
+      0 40px 90px rgba(0,0,0,0.65),
+      0 12px 30px rgba(0,0,0,0.5);
+  }
+  /* side buttons */
+  .iphone::before, .iphone::after { content: ""; position: absolute; background: linear-gradient(90deg, #2c2f36, #4a4e57, #2c2f36); border-radius: 2px; }
+  .iphone::before { left: -2.5px; top: 190px; width: 3px; height: 62px; }   /* action */
+  .iphone::after  { right: -2.5px; top: 220px; width: 3px; height: 96px; }  /* power */
+  .btn-vol { position: absolute; left: -2.5px; background: linear-gradient(90deg, #2c2f36, #4a4e57, #2c2f36); border-radius: 2px; width: 3px; }
+  .btn-vol.v1 { top: 280px; height: 56px; }
+  .btn-vol.v2 { top: 348px; height: 56px; }
+
+  .screen {
+    position: relative;
+    width: 402px; height: 874px;
+    border-radius: 50px;
+    overflow: hidden;
+    background: #0e0b16;
+    color: var(--text);
+  }
+
+  /* ---------- Ambient fluid gradient wallpaper ---------- */
+  .ambient { position: absolute; inset: -20%; filter: saturate(140%); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.85; will-change: transform; }
+  .blob.b1 { width: 480px; height: 480px; left: -12%; top: -8%;
+    background: radial-gradient(circle at 35% 35%, var(--indigo), transparent 65%);
+    animation: drift1 16s ease-in-out infinite alternate; }
+  .blob.b2 { width: 440px; height: 440px; right: -14%; top: 22%;
+    background: radial-gradient(circle at 60% 40%, var(--magenta), transparent 65%);
+    animation: drift2 19s ease-in-out infinite alternate; }
+  .blob.b3 { width: 420px; height: 420px; left: 8%; bottom: -14%;
+    background: radial-gradient(circle at 50% 50%, var(--amber), transparent 62%);
+    animation: drift3 22s ease-in-out infinite alternate; opacity: 0.55; }
+  @keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(70px, 50px) scale(1.15); } }
+  @keyframes drift2 { from { transform: translate(0,0) scale(1.1); } to { transform: translate(-60px, 70px) scale(0.95); } }
+  @keyframes drift3 { from { transform: translate(0,0) scale(0.95); } to { transform: translate(50px, -60px) scale(1.12); } }
+  /* deep vignette so glass contrast holds */
+  .ambient::after { content:""; position: absolute; inset: 0;
+    background: radial-gradient(120% 90% at 50% 10%, transparent 40%, rgba(6,4,14,0.55) 100%); }
+
+  /* ---------- Glass material ---------- */
+  .glass {
+    background: var(--glass-fill);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid var(--rim);
+    box-shadow: var(--sheen), var(--ambient);
+    border-radius: 26px;
+  }
+
+  .press { transition: transform 0.28s var(--spring), background 0.2s ease, box-shadow 0.28s var(--spring); cursor: pointer; }
+  .press:active { transform: scale(0.95); }
+
+  /* ---------- Dynamic Island + top capsule ---------- */
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 34px; border-radius: 20px; background: #000;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 8px rgba(255,255,255,0.05);
+    z-index: 60; display:flex; align-items:center; justify-content:flex-end; padding-right: 12px; gap: 6px;
+  }
+  .island .cam { width: 9px; height: 9px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #2a3140 15%, #06070a 60%);
+    box-shadow: inset 0 0 2px rgba(90,120,255,0.5); }
+
+  .topbar {
+    position: sticky; top: 10px; z-index: 50;
+    margin: 10px 14px 0;
+    padding: 10px 14px 12px;
+    border-radius: 30px;
+  }
+  .status-row { display: flex; align-items: center; justify-content: space-between;
+    font-size: 14px; font-weight: 600; letter-spacing: 0.02em; padding: 0 4px 8px; }
+  .status-icons { display: flex; align-items: center; gap: 6px; }
+  .brand-row { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--indigo), var(--magenta));
+    box-shadow: var(--sheen), 0 6px 18px rgba(236, 72, 153, 0.35); }
+  .brand-name { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand-sub { font-size: 11px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.03em; }
+  .top-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .icon-btn { position: relative; width: 38px; height: 38px; border-radius: 14px; display: grid; place-items: center;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: inset 0 1px 1px 0 rgba(255,255,255,0.35); }
+  .badge { position: absolute; top: -4px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px;
+    border-radius: 9px; background: var(--magenta); font-size: 10.5px; font-weight: 700;
+    display: grid; place-items: center; box-shadow: 0 2px 8px rgba(236,72,153,0.5); }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #F59E0B, #EC4899 70%);
+    border: 1px solid rgba(255,255,255,0.35); box-shadow: var(--sheen); }
+
+  /* ---------- Scroll body ---------- */
+  .content { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; }
+  .content::-webkit-scrollbar { display: none; }
+  .pad { padding: 8px 14px 150px; }
+
+  /* ---------- Views & transitions ---------- */
+  .view { display: none; }
+  .view.active { display: block; animation: viewIn 0.32s var(--spring) both; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+  h1.greet { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 14px 2px 2px; }
+  p.greet-sub { font-size: 13.5px; color: var(--text-dim); margin: 0 2px 16px; }
+
+  /* ---------- Hero metric card ---------- */
+  .hero { padding: 18px 18px 12px; border-radius: 30px; position: relative; overflow: hidden; }
+  .hero-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+  .hero-value { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; margin-top: 4px;
+    font-variant-numeric: tabular-nums; }
+  .hero-delta { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+    font-size: 13px; font-weight: 600; color: #6EE7B7;
+    background: rgba(110, 231, 183, 0.12); border: 1px solid rgba(110,231,183,0.25);
+    padding: 4px 10px; border-radius: 999px; }
+  .chart-wrap { margin-top: 12px; position: relative; }
+  .chart-tip { position: absolute; pointer-events: none; opacity: 0; transition: opacity 0.15s ease;
+    background: rgba(10, 8, 20, 0.85); border: 1px solid rgba(255,255,255,0.22);
+    padding: 6px 10px; border-radius: 12px; font-size: 12.5px; font-weight: 700;
+    font-variant-numeric: tabular-nums; transform: translate(-50%, -130%); white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
+  .ranges { display: flex; gap: 6px; margin-top: 10px; padding: 4px; border-radius: 14px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); width: max-content; }
+  .range { font-size: 12px; font-weight: 700; color: var(--text-dim); padding: 6px 14px;
+    border-radius: 10px; border: none; background: transparent; cursor: pointer;
+    transition: all 0.25s var(--spring); }
+  .range.on { color: #fff; background: rgba(255,255,255,0.16);
+    box-shadow: inset 0 1px 1px 0 rgba(255,255,255,0.4), 0 4px 12px rgba(0,0,0,0.25); }
+
+  /* ---------- 2x2 action grid ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .tile { padding: 16px; border-radius: 26px; position: relative; overflow: hidden; }
+  .tile .halo { position: absolute; width: 90px; height: 90px; right: -22px; top: -22px; border-radius: 50%; filter: blur(26px); opacity: 0.5; }
+  .tile h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; margin-top: 46px; }
+  .tile p { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+  .tile-icon { width: 42px; height: 42px; border-radius: 15px; display: grid; place-items: center;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 1px 0 rgba(255,255,255,0.45); position: absolute; top: 16px; left: 16px; }
+
+  /* ---------- Glass list rows ---------- */
+  .rows { margin-top: 14px; border-radius: 26px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 13px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .row:last-child { border-bottom: none; }
+  .row-icon { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; flex: none;
+    background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.16); }
+  .row-main { min-width: 0; }
+  .row-title { font-size: 14.5px; font-weight: 600; }
+  .row-sub { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
+  .row-amt { margin-left: auto; font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row-amt.pos { color: #6EE7B7; }
+
+  /* ---------- Wallet card (Cards tab) ---------- */
+  .ccard { border-radius: 30px; padding: 22px; position: relative; overflow: hidden; margin-top: 6px; }
+  .ccard .sheen { position: absolute; inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.16) 45%, transparent 60%); }
+  .ccard-top { display: flex; justify-content: space-between; align-items: center; }
+  .ccard-num { font-size: 19px; font-weight: 700; letter-spacing: 0.14em; margin-top: 42px; font-variant-numeric: tabular-nums; }
+  .ccard-meta { display: flex; justify-content: space-between; margin-top: 14px; font-size: 12px; color: var(--text-dim); }
+
+  /* ---------- Profile ---------- */
+  .profile-head { display: flex; flex-direction: column; align-items: center; padding: 18px 0 6px; }
+  .profile-avatar { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 28px; font-weight: 800; background: linear-gradient(135deg, var(--indigo), var(--magenta));
+    border: 1px solid rgba(255,255,255,0.35); box-shadow: var(--sheen), 0 16px 40px rgba(99,102,241,0.4); }
+  .profile-name { font-size: 21px; font-weight: 800; margin-top: 12px; }
+  .profile-mail { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .setting { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14.5px; font-weight: 600; }
+  .setting:last-child { border-bottom: none; }
+  .switch { width: 50px; height: 30px; border-radius: 999px; background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.22); position: relative; transition: background 0.25s ease; flex: none; }
+  .switch.on { background: #34D399; border-color: rgba(52,211,153,0.4); }
+  .switch i { position: absolute; top: 2.5px; left: 3px; width: 23px; height: 23px; border-radius: 50%;
+    background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.35); transition: left 0.28s var(--spring); }
+  .switch.on i { left: 24px; }
+
+  /* ---------- Dock ---------- */
+  .dock-zone { position: absolute; left: 0; right: 0; bottom: 0; z-index: 55;
+    padding: 0 16px calc(14px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .dock { pointer-events: auto; position: relative; display: flex; height: 68px; border-radius: 34px; padding: 8px; }
+  .dock-pill { position: absolute; top: 8px; bottom: 8px; width: calc((100% - 16px) / 4); border-radius: 26px;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: inset 0 1px 1px 0 rgba(255,255,255,0.55), 0 8px 22px rgba(0,0,0,0.28);
+    transition: left 0.42s var(--spring); }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    color: var(--text-faint); z-index: 1; background: none; border: none; cursor: pointer;
+    transition: color 0.25s ease, transform 0.28s var(--spring); font-family: inherit; }
+  .tab:active { transform: scale(0.9); }
+  .tab.on { color: #fff; }
+  .tab span { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+
+  /* ---------- FAB ---------- */
+  .fab-wrap { position: absolute; right: 18px; bottom: 104px; z-index: 56; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .fab-mini { display: flex; align-items: center; gap: 8px; padding: 9px 14px 9px 10px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; color: #fff; animation: pop 0.34s var(--spring) both; }
+  @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(0.8); } to { opacity: 1; transform: none; } }
+  .fab { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--indigo), var(--magenta));
+    border: 1px solid rgba(255,255,255,0.4);
+    box-shadow: inset 0 1px 1px 0 rgba(255,255,255,0.55), 0 16px 40px rgba(0,0,0,0.4), 0 8px 24px rgba(236,72,153,0.35);
+    transition: transform 0.3s var(--spring); cursor: pointer; }
+  .fab:active { transform: scale(0.88); }
+  .fab.open { transform: rotate(45deg) scale(0.94); }
+  .scrim { position: absolute; inset: 0; z-index: 54; background: rgba(5,4,12,0.45); opacity: 0;
+    pointer-events: none; transition: opacity 0.3s ease; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+
+  /* ---------- Toast ---------- */
+  .toast { position: absolute; left: 50%; bottom: 116px; transform: translateX(-50%) translateY(20px);
+    z-index: 70; padding: 11px 18px; border-radius: 999px; font-size: 13.5px; font-weight: 600;
+    opacity: 0; transition: all 0.35s var(--spring); pointer-events: none; }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  svg { display: block; }
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="device-scale" id="scaler">
+<div class="iphone">
+  <span class="btn-vol v1"></span><span class="btn-vol v2"></span>
+  <div class="screen" id="screen">
+    <div class="ambient"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+    <div class="island"><span class="cam"></span></div>
+
+    <div class="content" id="content">
+      <!-- ================= TOP BAR ================= -->
+      <header class="topbar glass">
+        <div class="status-row">
+          <span id="clock">9:41</span>
+          <span class="status-icons">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1" opacity="0.4"/></svg>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4.2a9.5 9.5 0 0 1 13 0"/><path d="M4 6.8a6 6 0 0 1 8 0"/><path d="M6.5 9.3a2.6 2.6 0 0 1 3 0"/><circle cx="8" cy="11" r="0.9" fill="#fff" stroke="none"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" fill="none" stroke="rgba(255,255,255,0.5)"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#fff"/><path d="M23.5 4v4a2.2 2.2 0 0 0 0-4z" fill="rgba(255,255,255,0.5)"/></svg>
+          </span>
+        </div>
+        <div class="brand-row">
+          <span class="logo-mark">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M10 3v14M3 10h14" opacity="0.9"/><circle cx="10" cy="10" r="6.2" /></svg>
+          </span>
+          <span>
+            <span class="brand-name">Aura</span>
+            <span class="brand-sub" style="display:block">Liquid glass · live</span>
+          </span>
+          <span class="top-actions">
+            <button class="icon-btn press" id="bell" aria-label="Notifications">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M6 14V9.5a4 4 0 0 1 8 0V14"/><path d="M4.5 14h11"/><path d="M8.5 16.5a1.6 1.6 0 0 0 3 0"/></svg>
+              <span class="badge" id="badge">3</span>
+            </button>
+            <button class="avatar press" aria-label="Profile">AM</button>
+          </span>
+        </div>
+      </header>
+
+      <div class="pad">
+        <!-- ================= HOME ================= -->
+        <section class="view active" id="view-home">
+          <h1 class="greet">Good evening, Ava.</h1>
+          <p class="greet-sub">Your day at a glance, rendered in glass.</p>
+
+          <!-- Hero metric widget -->
+          <div class="hero glass">
+            <span class="hero-label">Aura balance</span>
+            <div class="hero-value" id="heroValue">$24,680</div>
+            <span class="hero-delta">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 10V2M2.5 5.5 6 2l3.5 3.5"/></svg>
+              +2.4% this week
+            </span>
+            <div class="chart-wrap">
+              <svg id="chart" width="100%" height="130" viewBox="0 0 340 130" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#818CF8"/><stop offset="0.55" stop-color="#EC4899"/><stop offset="1" stop-color="#F59E0B"/>
+                  </linearGradient>
+                  <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="rgba(236,72,153,0.35)"/><stop offset="1" stop-color="rgba(236,72,153,0)"/>
+                  </linearGradient>
+                  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <path id="areaPath" fill="url(#fill)" opacity="0.9"/>
+                <path id="linePath" fill="none" stroke="url(#stroke)" stroke-width="2.6" stroke-linecap="round" filter="url(#glow)"/>
+                <line id="scrubLine" y1="10" y2="118" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-dasharray="3 4" opacity="0"/>
+                <circle id="scrubDot" r="4.5" fill="#fff" opacity="0" style="filter: drop-shadow(0 0 6px rgba(255,255,255,0.9))"/>
+              </svg>
+              <div class="chart-tip" id="chartTip">$0</div>
+            </div>
+            <div class="ranges" role="tablist" aria-label="Chart range">
+              <button class="range" data-range="1D">1D</button>
+              <button class="range on" data-range="1W">1W</button>
+              <button class="range" data-range="1M">1M</button>
+              <button class="range" data-range="1Y">1Y</button>
+            </div>
+          </div>
+
+          <!-- 2x2 action grid -->
+          <div class="grid2">
+            <button class="tile glass press" data-goto="stats">
+              <span class="halo" style="background:#818CF8"></span>
+              <span class="tile-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M4 16V9M10 16V4M16 16v-5"/></svg></span>
+              <h3>Insights</h3><p>Weekly trend report</p>
+            </button>
+            <button class="tile glass press" data-goto="cards">
+              <span class="halo" style="background:#EC4899"></span>
+              <span class="tile-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7"><rect x="2.5" y="5" width="15" height="10.5" rx="2.5"/><path d="M2.5 8.5h15" stroke-linecap="round"/></svg></span>
+              <h3>Cards</h3><p>2 active · 1 frozen</p>
+            </button>
+            <button class="tile glass press" id="tileSend">
+              <span class="halo" style="background:#F59E0B"></span>
+              <span class="tile-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3 9.5 10.5M17 3l-4.8 14-3.2-6.5L2.5 7.5 17 3z"/></svg></span>
+              <h3>Send</h3><p>Instant, fee-free</p>
+            </button>
+            <button class="tile glass press" data-goto="profile">
+              <span class="halo" style="background:#34D399"></span>
+              <span class="tile-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5" stroke-linecap="round"/></svg></span>
+              <h3>Profile</h3><p>Face ID · enabled</p>
+            </button>
+          </div>
+
+          <!-- Recent rows -->
+          <div class="rows glass" style="margin-top:14px">
+            <div class="row"><span class="row-icon"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#F59E0B" stroke-width="1.7" stroke-linecap="round"><path d="M10 2v3M10 15v3M2 10h3M15 10h3M4.9 4.9l2.1 2.1M13 13l2.1 2.1M15.1 4.9 13 7M7 13l-2.1 2.1"/></svg></span><span class="row-main"><span class="row-title">Solar credit</span><span class="row-sub">Today · 18:24</span></span><span class="row-amt pos">+$42.10</span></div>
+            <div class="row"><span class="row-icon"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#818CF8" stroke-width="1.7" stroke-linecap="round"><path d="M3 10h14M13 5.5 17.5 10 13 14.5"/></svg></span><span class="row-main"><span class="row-title">To Juniper M.</span><span class="row-sub">Yesterday · 21:02</span></span><span class="row-amt">−$86.00</span></div>
+            <div class="row"><span class="row-icon"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#EC4899" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="6" width="14" height="10" rx="2"/><path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6"/></svg></span><span class="row-main"><span class="row-title">Orchard & Co.</span><span class="row-sub">Yesterday · 12:40</span></span><span class="row-amt">−$23.75</span></div>
+          </div>
+        </section>
+
+        <!-- ================= STATS ================= -->
+        <section class="view" id="view-stats">
+          <h1 class="greet">Insights</h1>
+          <p class="greet-sub">Where the month went.</p>
+          <div class="hero glass">
+            <span class="hero-label">Spending velocity</span>
+            <div class="hero-value" style="font-size:34px">$1,847 <span style="font-size:14px;color:var(--text-dim);font-weight:600">/ week avg</span></div>
+            <div class="chart-wrap">
+              <svg width="100%" height="120" viewBox="0 0 340 120" preserveAspectRatio="none">
+                <path fill="url(#fill)" opacity="0.85" d="M0,96 C30,88 44,60 70,64 C96,68 108,40 136,46 C164,52 178,26 206,32 C234,38 248,20 276,26 C300,31 318,18 340,22 L340,120 L0,120 Z"/>
+                <path fill="none" stroke="url(#stroke)" stroke-width="2.6" stroke-linecap="round" filter="url(#glow)" d="M0,96 C30,88 44,60 70,64 C96,68 108,40 136,46 C164,52 178,26 206,32 C234,38 248,20 276,26 C300,31 318,18 340,22"/>
+              </svg>
+            </div>
+          </div>
+          <div class="rows glass">
+            <div class="row"><span class="row-main"><span class="row-title">Dining</span><span class="row-sub">28 payments</span></span><span class="row-amt">$612</span></div>
+            <div class="row"><span class="row-main"><span class="row-title">Transport</span><span class="row-sub">41 payments</span></span><span class="row-amt">$388</span></div>
+            <div class="row"><span class="row-main"><span class="row-title">Subscriptions</span><span class="row-sub">6 active</span></span><span class="row-amt">$214</span></div>
+            <div class="row"><span class="row-main"><span class="row-title">Everything else</span><span class="row-sub">63 payments</span></span><span class="row-amt">$633</span></div>
+          </div>
+        </section>
+
+        <!-- ================= CARDS ================= -->
+        <section class="view" id="view-cards">
+          <h1 class="greet">Cards</h1>
+          <p class="greet-sub">Tap a card to freeze or unfreeze.</p>
+          <div class="ccard glass press" id="ccard1" style="background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(236,72,153,0.4));">
+            <div class="sheen"></div>
+            <div class="ccard-top"><span class="brand-name">Aura Metal</span>
+              <svg width="30" height="22" viewBox="0 0 30 22"><circle cx="11" cy="11" r="8" fill="rgba(255,255,255,0.85)" opacity="0.9"/><circle cx="19" cy="11" r="8" fill="rgba(255,255,255,0.5)" opacity="0.8"/></svg>
+            </div>
+            <div class="ccard-num">•••• 4921</div>
+            <div class="ccard-meta"><span>AVA MORETTI</span><span>09 / 29</span></div>
+          </div>
+          <div class="ccard glass press" id="ccard2" style="background: rgba(255,255,255,0.08);">
+            <div class="ccard-top"><span class="brand-name" style="color:var(--text-dim)">Aura Virtual</span>
+              <svg width="26" height="20" viewBox="0 0 26 20"><path d="M4 10h18M18 5.5 22.5 10 18 14.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+            </div>
+            <div class="ccard-num" style="color:var(--text-dim)">•••• 7702</div>
+            <div class="ccard-meta"><span>FROZEN</span><span>—</span></div>
+          </div>
+          <div class="rows glass">
+            <div class="setting"><span>Online payments</span><button class="switch on press" role="switch" aria-checked="true" aria-label="Online payments"><i></i></button></div>
+            <div class="setting"><span>Contactless</span><button class="switch on press" role="switch" aria-checked="true" aria-label="Contactless"><i></i></button></div>
+            <div class="setting"><span>International</span><button class="switch press" role="switch" aria-checked="false" aria-label="International"><i></i></button></div>
+          </div>
+        </section>
+
+        <!-- ================= PROFILE ================= -->
+        <section class="view" id="view-profile">
+          <div class="profile-head">
+            <span class="profile-avatar">AM</span>
+            <span class="profile-name">Ava Moretti</span>
+            <span class="profile-mail">ava@aura.app · Member since 2023</span>
+          </div>
+          <div class="rows glass">
+            <div class="setting"><span>Face ID unlock</span><button class="switch on press" role="switch" aria-checked="true" aria-label="Face ID"><i></i></button></div>
+            <div class="setting"><span>Live activity haptics</span><button class="switch on press" role="switch" aria-checked="true" aria-label="Haptics"><i></i></button></div>
+            <div class="setting"><span>Weekly summary</span><button class="switch press" role="switch" aria-checked="false" aria-label="Weekly summary"><i></i></button></div>
+          </div>
+          <div class="rows glass">
+            <div class="setting"><span>Privacy</span><span style="color:var(--text-dim);font-weight:500">On-device ›</span></div>
+            <div class="setting"><span>Support</span><span style="color:var(--text-dim);font-weight:500">24 / 7 ›</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ================= FAB ================= -->
+    <div class="scrim" id="scrim"></div>
+    <div class="fab-wrap">
+      <button class="fab-mini glass press" data-act="Camera scan" style="animation-delay:0ms"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7"><path d="M3 7h4l1.4-2h3.2L13 7h4v10H3V7z"/><circle cx="10" cy="11.6" r="2.6"/></svg>Camera scan</button>
+      <button class="fab-mini glass press" data-act="Request money" style="animation-delay:45ms"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M10 17V7M5.5 11.5 10 7l4.5 4.5" transform="rotate(180 10 12)"/></svg>Request money</button>
+      <button class="fab-mini glass press" data-act="New transfer" style="animation-delay:90ms"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M3 10h14M13 5.5 17.5 10 13 14.5"/></svg>New transfer</button>
+      <button class="fab press" id="fab" aria-label="Quick actions" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+      </button>
+    </div>
+
+    <!-- ================= DOCK ================= -->
+    <div class="dock-zone">
+      <nav class="dock glass" aria-label="Primary">
+        <span class="dock-pill" id="pill" style="left:8px"></span>
+        <button class="tab on press" data-view="home" aria-label="Home">
+          <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 16.5V9L10 3.8 16.5 9v7.5"/><path d="M8 16.5v-4.4h4v4.4"/></svg>
+          <span>Home</span>
+        </button>
+        <button class="tab press" data-view="stats" aria-label="Insights">
+          <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 16V9M10 16V4M16 16v-5"/></svg>
+          <span>Insights</span>
+        </button>
+        <button class="tab press" data-view="cards" aria-label="Cards">
+          <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="15" height="10.5" rx="2.5"/><path d="M2.5 8.5h15" stroke-linecap="round"/></svg>
+          <span>Cards</span>
+        </button>
+        <button class="tab press" data-view="profile" aria-label="Profile">
+          <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5" stroke-linecap="round"/></svg>
+          <span>Profile</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="toast glass" id="toast">Done</div>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+  /* ---------- fit the 430×902 device to the viewport ---------- */
+  const scaler = $("#scaler");
+  function fit() {
+    const s = Math.min(1, (window.innerHeight - 28) / 902, (window.innerWidth - 16) / 430);
+    scaler.style.setProperty("--scale", s.toFixed(3));
+  }
+  fit();
+  window.addEventListener("resize", fit);
+
+  /* ---------- live clock ---------- */
+  const clock = $("#clock");
+  function tick() {
+    clock.textContent = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+  tick(); setInterval(tick, 15000);
+
+  /* ---------- toast ---------- */
+  const toast = $("#toast");
+  let toastT;
+  function say(msg) {
+    toast.textContent = msg;
+    toast.classList.add("on");
+    clearTimeout(toastT);
+    toastT = setTimeout(() => toast.classList.remove("on"), 1900);
+  }
+
+  /* ---------- hero chart (deterministic series per range) ---------- */
+  const SERIES = {
+    "1D":  [24480,24520,24455,24590,24640,24610,24720,24680,24760,24810,24755,24840,24790,24860,24820,24900,24865,24940,24905,24980],
+    "1W":  [24100,24180,24060,24220,24300,24240,24380,24460,24410,24530,24600,24540,24660,24720,24680,24760,24820,24980],
+    "1M":  [22400,22620,22510,22840,23020,22900,23260,23410,23300,23620,23840,23700,24060,24220,24100,24480,24680,24680],
+    "1Y":  [14200,15100,14800,16200,17100,16800,18400,19300,18900,20600,21400,21100,22600,23400,23100,24680]
+  };
+  const fmt = (n) => "$" + Math.round(n).toLocaleString("en-US");
+  const linePath = $("#linePath"), areaPath = $("#areaPath");
+  const heroValue = $("#heroValue");
+  const scrubLine = $("#scrubLine"), scrubDot = $("#scrubDot"), tip = $("#chartTip");
+  const W = 340, H = 130, PT = 12, PB = 14;
+  let pts = [], cur = "1W";
+
+  function buildPath(vals) {
+    const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+    pts = vals.map((v, i) => [ (i / (vals.length - 1)) * W, PT + (1 - (v - min) / span) * (H - PT - PB) ]);
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], mx = (x0 + x1) / 2;
+      d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+    }
+    return d;
+  }
+  function draw(range) {
+    cur = range;
+    const d = buildPath(SERIES[range]);
+    linePath.style.opacity = 0;
+    setTimeout(() => {
+      linePath.setAttribute("d", d);
+      areaPath.setAttribute("d", d + ` L${W},${H} L0,${H} Z`);
+      linePath.style.transition = "opacity .35s ease";
+      linePath.style.opacity = 1;
+    }, 120);
+    heroValue.textContent = fmt(SERIES[range][SERIES[range].length - 1]);
+  }
+  draw("1W");
+  $$(".range").forEach((b) =>
+    b.addEventListener("click", () => {
+      $$(".range").forEach((x) => x.classList.remove("on"));
+      b.classList.add("on");
+      draw(b.dataset.range);
+    })
+  );
+
+  /* pointer scrub */
+  const svg = $("#chart");
+  function scrub(e) {
+    const r = svg.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * W;
+    let best = 0, bd = 1e9;
+    pts.forEach(([px], i) => { const d = Math.abs(px - x); if (d < bd) { bd = d; best = i; } });
+    const [px, py] = pts[best];
+    const val = SERIES[cur][best];
+    scrubLine.setAttribute("x1", px); scrubLine.setAttribute("x2", px); scrubLine.style.opacity = 1;
+    scrubDot.setAttribute("cx", px); scrubDot.setAttribute("cy", py); scrubDot.style.opacity = 1;
+    tip.style.opacity = 1;
+    tip.style.left = (px / W) * r.width + "px";
+    tip.style.top = (py / H) * r.height + "px";
+    tip.textContent = fmt(val);
+    heroValue.textContent = fmt(val);
+  }
+  function unscrub() {
+    scrubLine.style.opacity = 0; scrubDot.style.opacity = 0; tip.style.opacity = 0;
+    heroValue.textContent = fmt(SERIES[cur][SERIES[cur].length - 1]);
+  }
+  svg.addEventListener("pointermove", scrub);
+  svg.addEventListener("pointerdown", scrub);
+  svg.addEventListener("pointerleave", unscrub);
+  svg.addEventListener("pointerup", unscrub);
+
+  /* ---------- view switching + sliding dock pill ---------- */
+  const pill = $("#pill");
+  const tabs = $$(".tab");
+  function go(name) {
+    tabs.forEach((t) => t.classList.toggle("on", t.dataset.view === name));
+    const i = tabs.findIndex((t) => t.dataset.view === name);
+    pill.style.left = `calc(8px + ${i} * (100% - 16px) / 4)`;
+    $$(".view").forEach((v) => v.classList.remove("active"));
+    $("#view-" + name).classList.add("active");
+    $("#content").scrollTo({ top: 0, behavior: "smooth" });
+  }
+  tabs.forEach((t) => t.addEventListener("click", () => go(t.dataset.view)));
+  $$("[data-goto]").forEach((b) => b.addEventListener("click", () => go(b.dataset.goto)));
+
+  /* ---------- FAB spring menu ---------- */
+  const fab = $("#fab"), fabWrap = $(".fab-wrap"), scrim = $("#scrim");
+  const minis = $$(".fab-mini");
+  let fabOpen = false;
+  function setFab(open) {
+    fabOpen = open;
+    fab.classList.toggle("open", open);
+    fab.setAttribute("aria-expanded", String(open));
+    minis.forEach((m) => { m.style.display = open ? "flex" : "none"; });
+    scrim.classList.toggle("on", open);
+    if (open) minis.forEach((m, i) => { m.style.animation = "none"; void m.offsetWidth; m.style.animation = `pop .34s var(--spring) ${i * 45}ms both`; });
+  }
+  fab.addEventListener("click", () => setFab(!fabOpen));
+  scrim.addEventListener("click", () => setFab(false));
+  minis.forEach((m) => m.addEventListener("click", () => { setFab(false); say(m.dataset.act + " · sheet opens here"); }));
+  setFab(false);
+
+  /* ---------- small real interactions ---------- */
+  $("#bell").addEventListener("click", () => {
+    const b = $("#badge");
+    if (b) { b.animate([{ transform: "scale(1)" }, { transform: "scale(1.4)" }, { transform: "scale(0)" }], { duration: 320, easing: "cubic-bezier(0.34,1.56,0.64,1)" }).onfinish = () => b.remove(); say("3 notifications marked as seen"); }
+    else say("You are all caught up");
+  });
+  $("#tileSend").addEventListener("click", () => { setFab(true); });
+  $("#ccard1").addEventListener("click", function () {
+    const frozen = this.dataset.frozen === "1";
+    this.dataset.frozen = frozen ? "" : "1";
+    this.style.filter = frozen ? "" : "grayscale(0.7) brightness(0.75)";
+    say(frozen ? "Card unfrozen" : "Card frozen · payments paused");
+  });
+  $("#ccard2").addEventListener("click", function () { say("Virtual card is frozen"); });
+  $$(".switch").forEach((s) =>
+    s.addEventListener("click", () => {
+      const on = s.classList.toggle("on");
+      s.setAttribute("aria-checked", String(on));
+    })
+  );
+})();
+</script>
+</body>
+</html>

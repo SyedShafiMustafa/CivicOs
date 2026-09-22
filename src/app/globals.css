@@ -1,0 +1,499 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+
+  /* ---- CIVICOS survey palette -------------------------------------------
+     Bone paper ground, iron-gall ink, brass registration.
+     No pure white: paper #f4f1ea, panels #fbf9f4. -------------------------*/
+  --paper: #f4f1ea; /* page ground */
+  --panel: #fbf9f4; /* raised panels */
+  --well: #ede9df; /* recessed wells */
+  --ink: #1f2a24; /* primary text: blue-black ink */
+  --ink-soft: #4b574f; /* secondary text */
+  --ink-faint: #8a938c; /* tertiary text */
+  --rule: #d8d2c4; /* hairline rules */
+  --rule-strong: #b9b1a0;
+  --accent: #175e54; /* registration green (deep pine) */
+  --accent-wash: #e3e9e3;
+  --seal: #b3543f; /* verification seal terracotta */
+  --seal-wash: #f3e4de;
+  --alert: #a03430; /* high/critical */
+  --alert-wash: #f5e3e1;
+  --warn: #a4691c; /* medium */
+  --warn-wash: #f3e9d7;
+  --hold: #8d7430; /* low priority */
+  --hold-wash: #f0ead8;
+  --ok: #3d7a4a; /* resolved */
+  --ok-wash: #e4ecdf;
+
+  --font-display-var: var(--font-display);
+  --font-body-var: var(--font-body);
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display serif helper — optical sizing lets Fraunces sharpen at headline
+   sizes and soften at small ones, which tightens the editorial hierarchy. */
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+/* ---- Ink rules ------------------------------------------------------------ */
+.rule-t {
+  border-top: 1px solid var(--rule);
+}
+.rule-b {
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Double rule under mastheads — the survey-sheet signature.
+   A filled ink diamond terminals the rule at its start, like a drafting mark. */
+.rule-double {
+  position: relative;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  height: 3px;
+}
+.rule-double::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translateY(-50%) rotate(45deg);
+  background: var(--ink);
+}
+
+/* ---- Plate shadow: hard offset ink plate, not blur ------------------------
+   A faint inner top highlight makes each plate feel printed, not pasted. */
+/* Two-step plates: the offset block plus a 1px darker lip reads as a printed
+   sheet stacked on paper, far crisper than a single flat block. */
+.plate {
+  border: 1px solid var(--rule-strong);
+  background: var(--panel);
+  box-shadow:
+    inset 0 1px 0 0 var(--panel),
+    3px 3px 0 0 var(--well),
+    4px 4px 0 0 rgba(31, 42, 36, 0.07);
+}
+.plate-ink {
+  border: 1px solid var(--ink);
+  background: var(--panel);
+  box-shadow:
+    inset 0 1px 0 0 var(--panel),
+    4px 4px 0 0 var(--rule-strong),
+    5px 5px 0 0 rgba(31, 42, 36, 0.1);
+}
+.plate-accent {
+  border: 1px solid var(--accent);
+  background: var(--panel);
+  box-shadow:
+    inset 0 1px 0 0 var(--panel),
+    4px 4px 0 0 var(--accent-wash),
+    5px 5px 0 0 rgba(23, 94, 84, 0.14);
+}
+
+/* ---- Loading: ink pen filling a dashed outline (no skeletons) -------------- */
+@keyframes pen-fill {
+  0% {
+    background-position: -220px 0;
+  }
+  100% {
+    background-position: 220px 0;
+  }
+}
+.pen-loading {
+  position: relative;
+  overflow: hidden;
+  background: var(--well);
+  border-radius: 2px;
+}
+.pen-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(31, 42, 36, 0.14) 45%,
+    rgba(31, 42, 36, 0.2) 55%,
+    transparent 100%
+  );
+  animation: pen-fill 1.3s ease-in-out infinite;
+}
+
+/* Dashed field-outline that "draws" itself while data loads */
+@keyframes dash-march {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.field-march {
+  stroke-dasharray: 6 6;
+  animation: dash-march 1.2s linear infinite;
+}
+
+/* ---- MapLibre styling ------------------------------------------------------ */
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+  background: rgba(251, 249, 244, 0.85) !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--ink-soft) !important;
+}
+.maplibregl-ctrl-group {
+  border-radius: 0 !important;
+  border: 1px solid var(--ink) !important;
+  box-shadow: 3px 3px 0 0 var(--rule-strong) !important;
+  overflow: hidden;
+  background: var(--panel) !important;
+}
+.maplibregl-ctrl-group button {
+  transition: background-color 0.12s ease !important;
+}
+.maplibregl-ctrl-group button:hover {
+  background-color: var(--well) !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--rule) !important;
+}
+.maplibregl-ctrl-group button span {
+  filter: invert(14%) sepia(10%) saturate(1400%) hue-rotate(88deg) brightness(88%);
+}
+.maplibregl-ctrl-scale {
+  background: rgba(251, 249, 244, 0.9) !important;
+  border-color: var(--rule-strong) !important;
+  border-radius: 0;
+  font-size: 10px !important;
+  color: var(--ink-soft) !important;
+  font-family: var(--font-mono), monospace;
+}
+
+/* ---- Custom markers ---------------------------------------------------------
+   True diamonds: a rotated square drawn by ::before (inscribed in the box),
+   ringed in panel tone so they hold contrast on any tile. The JS sets --mk
+   and the box size; everything visual lives here. */
+.civ-marker {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+}
+/* The double ring (panel gap + ink hairline) keeps every diamond legible on
+   light streets, green parks and dark roads alike. */
+.civ-marker::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: rotate(45deg) scale(0.78);
+  background: var(--mk, var(--accent));
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 3px rgba(31, 42, 36, 0.45),
+    0 2px 0 3px rgba(31, 42, 36, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.civ-marker:hover::before {
+  transform: rotate(45deg) scale(0.9);
+}
+.civ-marker.is-selected::before {
+  transform: rotate(45deg) scale(0.9);
+  box-shadow:
+    0 0 0 2.5px var(--panel),
+    0 0 0 5px var(--mk, var(--accent)),
+    0 0 0 6px rgba(31, 42, 36, 0.35),
+    0 2px 0 6px rgba(31, 42, 36, 0.16);
+}
+.civ-marker::after {
+  content: attr(data-count);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--panel);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  padding: 6px 9px;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 0 rgba(31, 42, 36, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+.civ-marker:hover::after {
+  opacity: 1;
+}
+.civ-user-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 1px 0 3px rgba(31, 42, 36, 0.18);
+}
+
+/* ---- Cluster chip: colliding markers merge into a stacked-diamond chip ----
+   Anchor diamond stays visible; the chip carries the member count. Tapping
+   zooms to expand the group. */
+.civ-cluster {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  filter: drop-shadow(2px 2px 0 rgba(31, 42, 36, 0.3));
+  transition: transform 0.16s var(--spring, ease);
+}
+.civ-cluster:active {
+  transform: scale(0.9);
+}
+.civ-cluster-diamond {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  transform-origin: 0 0;
+  /* translate set inline per layer; rotate here via nested pseudo */
+  background: var(--mk, var(--accent));
+  box-shadow:
+    0 0 0 1.5px var(--panel),
+    0 0 0 2.5px rgba(31, 42, 36, 0.4);
+}
+/* the rotation lives on a pseudo so the inline transform only stacks */
+.civ-cluster-diamond::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  transform: rotate(45deg);
+  box-shadow: inherit;
+}
+.civ-cluster-diamond {
+  background: transparent;
+}
+.civ-cluster-count {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--panel);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  border: 1.5px solid var(--panel);
+  box-shadow: 0 0 0 1px rgba(31, 42, 36, 0.45), 0 2px 0 2px rgba(31, 42, 36, 0.2);
+  z-index: 2;
+}
+.civ-cluster:hover .civ-cluster-count {
+  background: var(--accent);
+}
+
+/* Markers folded into a cluster keep their tooltip suppressed */
+.civ-marker.is-crowded::after {
+  opacity: 0 !important;
+}
+
+/* ---- Scrollbars: ink track --------------------------------------------------- */
+.scroll-thin::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+  border: 3px solid var(--panel);
+  border-radius: 6px;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- Focus: dotted surveyor reticle ------------------------------------------- */
+:focus-visible {
+  outline: 2px dotted var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Buttons: ink press physics ---------------------------------------------- */
+.btn-press {
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.12s ease, transform 0.08s ease;
+}
+.btn-press:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+
+/* ======================================================================
+   MOBILE PROTOTYPE — "field sheet, held in hand"
+   A < 430px-only companion layer: paper cards above, liquid glass for the
+   surfaces the thumb actually touches (top bar, dock, FAB). The desktop
+   survey sheet above is untouched. Dark mode re-inks the paper.
+   ====================================================================== */
+
+/* ---- Glass surface tokens (only used by the mobile chrome) ------------- */
+:root {
+  --glass-bg: rgba(251, 249, 245, 0.68);
+  --glass-border: rgba(44, 42, 41, 0.22);
+  --glass-highlight: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 12px 32px rgba(44, 42, 41, 0.14);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@media (max-width: 429.98px) {
+  html[data-mobile-theme="dark"] {
+    color-scheme: dark;
+    /* Night ledger: warm charcoal paper, cream ink, same hues re-weighted */
+    --paper: #201e1b;
+    --panel: #26241f;
+    --well: #2e2b26;
+    --ink: #ece7dc;
+    --ink-soft: #c2bcae;
+    --ink-faint: #8b8578;
+    --rule: #3b3831;
+    --rule-strong: #514d43;
+    --glass-bg: rgba(30, 28, 26, 0.72);
+    --glass-border: rgba(236, 231, 220, 0.16);
+    --glass-highlight: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    --accent-wash: #24352f;
+    --alert-wash: #3a2724;
+    --warn-wash: #383021;
+    --hold-wash: #352f20;
+    --ok-wash: #253326;
+    --seal-wash: #38291f;
+  }
+}
+
+/* Selection ------------------------------------------------------------------ */
+::selection {
+  background: var(--accent-wash);
+  color: var(--ink);
+}
+
+/* ---- Stamp rotation for verified seals -------------------------------------------- */
+.stamp {
+  transform: rotate(-6deg);
+}
+
+/* ---- Asymmetric offset utility for editorial rhythm --------------------------------- */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ======================================================================
+   MOBILE PROTOTYPE SURFACES (continued)
+   ====================================================================== */
+
+/* ---- Liquid glass: warm cream glass reserved for the mobile chrome -------
+   Specular inner highlight + saturating backdrop blur; the paper cards above
+   stay hard-edged ink plates so the two material languages stay distinct. */
+.glass-mobile {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 1px 0 var(--glass-highlight),
+    var(--glass-shadow);
+}
+
+/* ---- Tactile press: spring scale compression (thumb feedback) -------------- */
+.press-mobile {
+  transition: transform 0.16s var(--spring), box-shadow 0.16s var(--spring);
+}
+.press-mobile:active {
+  transform: scale(0.95);
+}
+
+/* ---- Animated alert dot ---------------------------------------------------- */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: rotate(45deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(45deg) scale(1.55);
+    opacity: 0.65;
+  }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+/* ---- Spring pop for menu entries ------------------------------------------- */
+@keyframes spring-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-spring-pop {
+  animation: spring-pop 0.3s var(--spring) both;
+}
+
+/* ---- FAB pressed state ------------------------------------------------------ */
+.fab-open {
+  transform: scale(0.92);
+}
+
+/* Hide scrollbars on horizontal chip rails (all widths) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ---- Mobile map control clearance --------------------------------------
+   The mobile map sheet overlays glass chrome: filter chips on top, dock and
+   FAB at the bottom. These scopes shift MapLibre's built-in controls out of
+   those zones; only pages that opt in are affected. */
+.civ-map-chips .maplibregl-ctrl-top-right {
+  top: 56px;
+}
+.civ-map-dock .maplibregl-ctrl-bottom-left,
+.civ-map-dock .maplibregl-ctrl-bottom-right {
+  bottom: 96px;
+}
