@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { fetchMe, fetchNotifications, useApi } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { Avatar } from "@/components/ui/Avatar";
 import {
   GlyphOverview,
   GlyphMap,
@@ -139,10 +140,12 @@ export default function Sidebar({ className, onNavigate }: { className?: string;
             Demo
           </span>
         </Link>
-        <div className="mt-3 flex items-center gap-2.5 border-t border-rule pt-3.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-accent/50 bg-accent-wash font-data text-[11px] font-semibold tracking-wide text-accent shadow-[1.5px_1.5px_0_0_var(--accent-wash)]">
-            {me?.user.initials ?? "·"}
-</span>
+        <div className="mt-3 flex items-center gap-2.5 border-t border-rule pt-3.5">          <Avatar
+            src={me?.user.avatar_uri}
+            name={me?.user.name}
+            initials={me?.user.initials ?? "·"}
+            className="flex h-8 w-8 shrink-0 items-center justify-center border border-accent/50 bg-accent-wash object-cover font-data text-[11px] font-semibold tracking-wide text-accent shadow-[1.5px_1.5px_0_0_var(--accent-wash)]"
+          />
           <div className="min-w-0 leading-tight">
             <div className="truncate text-[13px] font-medium tracking-[0.005em] text-ink">{me?.user.name ?? "—"}</div>
             <div className="mt-px truncate font-data text-[10px] text-ink-faint">{me?.user.area ?? ""}</div>

@@ -32,12 +32,14 @@ class UserOut(BaseModel):
     email: str
     area: str
     initials: str
+    avatar_uri: Optional[str] = None
 
 
 class ObservationOut(BaseModel):
     id: str
     user_id: str
     user_name: str
+    user_avatar_uri: Optional[str] = None
     image_uri: Optional[str] = None
     latitude: float
     longitude: float

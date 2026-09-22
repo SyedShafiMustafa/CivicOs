@@ -171,7 +171,7 @@ SAMPLES: list[dict] = [
     },
 ]
 for _s in SAMPLES:
-    _s["image_uri"] = images.frame_data_uri(_s["issue_type"], _s["id"])
+    _s["image_uri"] = images.photo_uri(_s["issue_type"], _s["id"])
 SAMPLE_BY_ID = {s["id"]: s for s in SAMPLES}
 
 # --- Curated "after" samples (verification flow) --------------------------------------
@@ -213,9 +213,11 @@ for _cat in ["roads", "garbage", "water", "streetlights", "drainage", "accessibi
     for d in defs:
         if d["outcome"] == "cleared":
             kind = "after"
+            if _cat == "garbage":
+                kind = "after-clean"  # cleanup, not re-surfacing
         else:
             kind = _cat
-        d["image_uri"] = images.frame_data_uri(kind, d["id"])
+        d["image_uri"] = images.photo_uri(kind, d["id"])
     AFTER_SAMPLES[_cat] = defs
 
 # --- Incident definitions ---------------------------------------------------------------
@@ -667,6 +669,7 @@ def build(store) -> None:
             "id": uid, "name": name, "first_name": first,
             "email": f"{first.lower()}.{name.split()[-1].lower()}@example.com",
             "area": area, "initials": "".join(w[0] for w in name.split()[:2]).upper(),
+            "avatar_uri": images.avatar_uri(uid),
         }
 
     obs_seq = 1
@@ -690,7 +693,7 @@ def build(store) -> None:
             obs_seq += 1
             lat = d["latitude"] + (((i * 37) % 17) - 8) * 0.00018
             lng = d["longitude"] + (((i * 53) % 23) - 11) * 0.00019
-            img = images.frame_data_uri(d["issue"], oid) if i in d.get("images", []) else None
+            img = images.photo_uri(d["issue"], oid) if i in d.get("images", []) else None
             store.observations[oid] = {
                 "id": oid, "user_id": uid, "image_uri": img,
                 "latitude": round(lat, 6), "longitude": round(lng, 6),
@@ -735,13 +738,13 @@ def build(store) -> None:
             store.resolutions[r["id"]] = {
                 "id": r["id"], "incident_id": d["id"], "resolved_at": r["resolved_at"],
                 "resolved_by": r["resolved_by"], "notes": r["notes"],
-                "evidence_uri": images.frame_data_uri(r["evidence_kind"], r["id"]),
+                "evidence_uri": images.photo_uri(r["evidence_kind"], r["id"]),
                 "before_observation_id": before_oid,
                 "before_image_uri": store.observations[before_oid]["image_uri"],
             }
         if "verification" in d:
             v = d["verification"]
-            after_uri = v["after_image"] or images.frame_data_uri(
+            after_uri = v["after_image"] or images.photo_uri(
                 "after", v["after_sample_id"] or inc_id
             )
             store.verifications[v["id"]] = {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { fetchMe, useApi } from "@/lib/api";
+import { Avatar } from "@/components/ui/Avatar";
 import {
   Card,
   ErrorState,
@@ -82,9 +83,12 @@ export default function SettingsPage() {
       <Card>
         <SectionHead title="Profile" sub="Demo account. Authentication is not part of this prototype." />
         <div className="flex items-center gap-4 border-t border-rule p-5">
-          <span className="flex h-12 w-12 items-center justify-center border border-accent/50 bg-accent-wash font-data text-sm font-semibold text-accent">
-            {me?.user.initials ?? "·"}
-          </span>
+          <Avatar
+            src={me?.user.avatar_uri}
+            name={me?.user.name}
+            initials={me?.user.initials ?? "·"}
+            className="flex h-12 w-12 items-center justify-center border border-accent/50 bg-accent-wash object-cover font-data text-sm font-semibold text-accent"
+          />
           <div>
             <p className="text-sm font-medium text-ink">{me?.user.name ?? "—"}</p>
             <p className="text-xs text-ink-faint">{me?.user.email ?? ""}</p>

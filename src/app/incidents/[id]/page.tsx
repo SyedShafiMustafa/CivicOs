@@ -31,6 +31,7 @@ import {
   cn,
 } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/Toast";
+import { Avatar } from "@/components/ui/Avatar";
 import {
   GlyphBack,
   GlyphCamera,
@@ -566,9 +567,12 @@ export default function IncidentDetailPage() {
                       className="group border border-rule-strong text-left transition-colors hover:border-accent"
                     >
                       <EvidencePlate src={o.image_uri} alt={`Exhibit by ${o.user_name}`} className="aspect-[4/3] w-full border-0" />
-                      <span className="flex items-center justify-between px-2 py-1.5">
-                        <span className="font-data text-[10px] uppercase tracking-wide text-ink-soft">
-                          Ex. {String.fromCharCode(65 + i)} · {o.user_name.split(" ")[0]}
+                      <span className="flex items-center justify-between gap-1.5 px-2 py-1.5">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <Avatar src={o.user_avatar_uri} name={o.user_name} initials={o.user_name.split(" ").map((w) => w[0]).slice(0, 2).join("")} className="h-4 w-4 shrink-0 border border-rule object-cover" />
+                          <span className="truncate font-data text-[10px] uppercase tracking-wide text-ink-soft">
+                            Ex. {String.fromCharCode(65 + i)} · {o.user_name.split(" ")[0]}
+                          </span>
                         </span>
                         <span className="font-data text-[9.5px] text-ink-faint">{timeAgo(o.timestamp)}</span>
                       </span>

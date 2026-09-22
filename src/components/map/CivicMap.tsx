@@ -146,8 +146,19 @@ export default function CivicMap({
         }
       }
     };
-    if (m.loaded()) build();
-    else m.once("load", build);
+    // Robust readiness: a freshly-mounted (or momentarily hidden) container can
+    // stall the `load` event, so never rely on it alone — poll until the map
+    // reports loaded, then build. build() is idempotent (keyed by incident id).
+    let done = false;
+    const attempt = () => {
+      if (done) return;
+      if (m.loaded()) { done = true; clearInterval(timer); m.off("load", attempt); build(); }
+    };
+    const timer = setInterval(attempt, 200);
+    m.once("load", attempt);
+    attempt();
+    const stop = () => { done = true; clearInterval(timer); };
+    return stop;
   }, [incidents, selectedId]);
 
   // ---- Declutter pass: hide colliding markers behind one cluster chip ----

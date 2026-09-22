@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchMe, useApi } from "@/lib/api";
 import { Stamp, cn } from "@/components/ui/primitives";
+import { Avatar } from "@/components/ui/Avatar";
 
 const THEME_KEY = "civicos-theme";
 
@@ -69,9 +70,12 @@ export default function MobileSettings() {
 
       {/* Profile */}
       <section className="plate mt-4 flex items-center gap-3.5 p-4">
-        <span className="flex h-11 w-11 items-center justify-center border border-accent/50 bg-accent-wash font-data text-[13px] font-semibold text-accent">
-          {me?.user.initials ?? "·"}
-        </span>
+        <Avatar
+          src={me?.user.avatar_uri}
+          name={me?.user.name}
+          initials={me?.user.initials ?? "·"}
+          className="flex h-11 w-11 items-center justify-center border border-accent/50 bg-accent-wash object-cover font-data text-[13px] font-semibold text-accent"
+        />
         <div className="min-w-0">
           <p className="text-[14px] font-medium text-ink">{me?.user.name ?? "—"}</p>
           <p className="truncate text-[11.5px] text-ink-faint">{me?.user.email ?? ""}</p>

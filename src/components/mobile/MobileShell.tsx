@@ -22,6 +22,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { fetchIncident, fetchMe, fetchNotifications, useApi } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { Avatar } from "@/components/ui/Avatar";
 import {
   GlyphLogomark,
   GlyphMap,
@@ -277,11 +278,11 @@ export default function MobileShell({
               ) : null}
             </button>
             <button
-              aria-label="Profile and settings"
               onClick={() => go("settings")}
-              className="press-mobile ml-0.5 flex h-8 w-8 items-center justify-center border border-accent/50 bg-accent-wash font-data text-[10.5px] font-semibold text-accent"
+              className="press-mobile ml-0.5 border border-accent/50 bg-accent-wash p-0"
+              aria-label="Profile and settings"
             >
-              {me?.user.initials ?? "·"}
+              <Avatar src={me?.user.avatar_uri} name={me?.user.name} initials={me?.user.initials ?? "·"} className="flex h-8 w-8 items-center justify-center object-cover font-data text-[10.5px] font-semibold text-accent" />
             </button>
           </div>
         </div>

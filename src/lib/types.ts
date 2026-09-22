@@ -26,6 +26,7 @@ export interface User {
   email: string;
   area: string;
   initials: string;
+  avatar_uri?: string | null;
 }
 
 export interface WhyFactor {
@@ -37,6 +38,7 @@ export interface Observation {
   id: string;
   user_id: string;
   user_name: string;
+  user_avatar_uri?: string | null;
   image_uri: string | null;
   latitude: number;
   longitude: number;

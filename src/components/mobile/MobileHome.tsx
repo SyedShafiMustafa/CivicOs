@@ -67,7 +67,7 @@ function FeedCard({ a, incidents }: { a: ActivityItem; incidents: Incident[] }) 
         <span className="flex h-5 w-5 items-center justify-center border border-rule-strong bg-well text-ink-soft">
           <ActivityGlyph kind={a.kind} className="h-3 w-3" />
         </span>
-        <span>Agent #409</span>
+        <span>Tanisha Rao · Agent #409</span>
         <span aria-hidden="true">·</span>
         <span>{timeAgo(a.timestamp)}</span>
       </div>

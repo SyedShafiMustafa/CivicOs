@@ -160,7 +160,7 @@ export default function IncidentDetail({
       </section>
 
       {/* Verification (hero loop) */}
-      {canVerify && data.resolution ? <VerifySection resolutionId={data.resolution.id} /> : null}
+      {canVerify && data.resolution ? <VerifySection resolutionId={data.resolution.id} beforeImage={data.resolution.before_image_uri} /> : null}
 
       {/* GHMC demo connector */}
       <ComplaintSection incidentId={data.id} complaint={data.complaint} />
@@ -278,7 +278,7 @@ function ComplaintSection({
 /* ------------------------------------------------------------------ *
  * Before/after verification, in-frame.
  * ------------------------------------------------------------------ */
-function VerifySection({ resolutionId }: { resolutionId: string }) {
+function VerifySection({ resolutionId, beforeImage }: { resolutionId: string; beforeImage: string | null }) {
   const [samples, setSamples] = useState<AfterSample[]>([]);
   const [sample, setSample] = useState<AfterSample | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -336,9 +336,14 @@ function VerifySection({ resolutionId }: { resolutionId: string }) {
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div>
           <p className="font-data text-[8.5px] uppercase tracking-[0.14em] text-ink-faint">Before</p>
-          <div className="mt-1 flex h-20 items-center justify-center border border-rule-strong bg-well font-data text-[9px] uppercase tracking-[0.14em] text-ink-faint">
-            Pre-repair evidence
-          </div>
+          {beforeImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={beforeImage} alt="Pre-repair evidence" className="mt-1 h-20 w-full border border-rule-strong object-cover" />
+          ) : (
+            <div className="mt-1 flex h-20 items-center justify-center border border-rule-strong bg-well font-data text-[9px] uppercase tracking-[0.14em] text-ink-faint">
+              Pre-repair evidence
+            </div>
+          )}
         </div>
         <div>
           <p className="font-data text-[8.5px] uppercase tracking-[0.14em] text-ink-faint">After (pick a capture)</p>

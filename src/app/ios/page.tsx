@@ -55,6 +55,7 @@ import type {
   Verification,
 } from "@/lib/types";
 import { GlyphLogomark } from "@/lib/glyphs";
+import { Avatar } from "@/components/ui/Avatar";
 
 /* ------------------------------------------------------------------ *
  * Frame-scoped stylesheet
@@ -916,9 +917,13 @@ function SettingsSheet({
       <ScreenHead eyebrow="Sheet 07 · surveyor" title="Settings" />
       <div className="fplate mt-3 p-4">
         <div className="frow gap-3">
-          <span className="fmono grid h-11 w-11 place-items-center border text-[13px] font-bold" style={{ borderColor: "var(--facc)", background: "var(--faccw)", color: "var(--facc)" }}>
-            {me?.user.initials ?? "TR"}
-          </span>
+          <Avatar
+            src={me?.user.avatar_uri}
+            name={me?.user.name}
+            initials={me?.user.initials ?? "TR"}
+            className="fmono grid h-11 w-11 place-items-center border object-cover text-[13px] font-bold"
+            style={{ borderColor: "var(--facc)", background: "var(--faccw)", color: "var(--facc)" }}
+          />
           <div className="min-w-0">
             <p className="fserif text-[15px] font-semibold">{me?.user.name ?? "Tanisha Rao"}</p>
             <p className="fmono mt-0.5 text-[8.5px]" style={{ color: "var(--fink3)" }}>
@@ -1027,9 +1032,11 @@ function ReportWizard({
     setMatch(null);
     setAnalyzing(true);
     try {
+      // Curated samples carry their ground truth via sample_id (no image bytes
+      // needed). Re-uploading the photo would be a cross-origin fetch from the
+      // prototype hosts, which static assets do not allow.
       const form = new FormData();
-      const blob = await fetch(s.image_uri).then((r) => r.blob());
-      form.append("image", blob, `${s.id}.svg`);
+      form.append("sample_id", s.id);
       form.append("latitude", String(s.latitude));
       form.append("longitude", String(s.longitude));
       const a = await analyzeImage(form);

@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { ActivityGlyph, GlyphSearch, GlyphClose } from "@/lib/glyphs";
+import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
 
 export default function TopBar({ onMenu }: { onMenu: () => void }) {
@@ -151,9 +152,12 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
         <span className="mx-1 hidden h-6 w-px bg-rule sm:block" />
 
         <Link href="/settings" className="flex items-center gap-2.5 px-1.5 py-1 hover:bg-well">
-          <span className="flex h-8 w-8 items-center justify-center border border-accent/50 bg-accent-wash font-data text-xs font-semibold text-accent">
-            {me?.user.initials ?? "·"}
-          </span>
+          <Avatar
+            src={me?.user.avatar_uri}
+            name={me?.user.name}
+            initials={me?.user.initials ?? "·"}
+            className="flex h-8 w-8 items-center justify-center border border-accent/50 bg-accent-wash object-cover font-data text-xs font-semibold text-accent"
+          />
           <span className="hidden leading-tight sm:block">
             <span className="block text-[13px] font-medium text-ink">{me?.user.name ?? "—"}</span>
             <span className="block font-data text-[10px] text-ink-faint">{me?.user.area ?? ""}</span>

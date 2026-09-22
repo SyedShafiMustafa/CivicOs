@@ -477,3 +477,70 @@ def frame_data_uri(kind: str, seed: str) -> str:
     """Base64 data URI — survives JSON payloads and <img> tags cleanly."""
     svg = frame(kind, seed)
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
+
+
+# --- Real-photo pool (served from public/evidence by all frontend hosts) ---------
+
+import urllib.request  # noqa: E402  (stdlib, used only at import time below)
+
+_PHOTO_ROOT = ("http://localhost:3000", "/evidence")  # any frontend host serves public/
+
+# kind -> photo filename patterns to try, in order
+_PHOTO_POOLS: dict[str, list[str]] = {
+    "roads": ["roads-1", "roads-2", "roads-2-1", "roads-2-2", "roads-3", "roads-4"],
+    "garbage": [f"garbage-{i}" for i in range(1, 7)],
+    "water": [f"water-{i}" for i in range(1, 6)],
+    "streetlights": [f"streetlights-{i}" for i in range(1, 4)],
+    "drainage": [f"drainage-{i}" for i in range(1, 4)],
+    "accessibility": [f"accessibility-{i}" for i in range(1, 3)],
+    "after": [f"after-{i}" for i in range(1, 6)],
+    "after-clean": [f"after-clean-{i}" for i in range(1, 3)],
+}
+
+_AVATAR_ROOT = ("http://localhost:3000", "/avatars")
+
+
+def _local_url(root: tuple[str, str], name: str) -> str:
+    return f"{root[0]}{root[1]}/{name}.jpg"
+
+
+def _available(root: tuple[str, str], names: list[str]) -> list[str]:
+    """Keep only names that actually resolve on the frontend host (dev or prod)."""
+    out: list[str] = []
+    for n in names:
+        url = _local_url(root, n)
+        try:
+            req = urllib.request.Request(url, method="HEAD")
+            with urllib.request.urlopen(req, timeout=2) as r:
+                if r.status == 200:
+                    out.append(url)
+        except Exception:
+            continue
+    return out
+
+
+_POOLS_CACHE: dict[str, list[str]] = {}
+_AVAIL_CACHE: dict[str, list[str]] = {}
+
+
+def photo_uri(kind: str, seed: str) -> str:
+    """A real evidence photo for `kind`, picked deterministically from `seed`.
+
+    Falls back to the generated SVG frame when the local pool is unavailable
+    (fresh checkout before assets are fetched, or offline backend runs).
+    """
+    if kind not in _POOLS_CACHE:
+        _POOLS_CACHE[kind] = _available(_PHOTO_ROOT, _PHOTO_POOLS.get(kind, []))
+    pool = _POOLS_CACHE[kind]
+    if not pool:
+        return frame_data_uri(kind, seed)
+    h = int(hashlib.md5(seed.encode()).hexdigest()[:8], 16)
+    return pool[h % len(pool)]
+
+
+def avatar_uri(user_id: str) -> str | None:
+    """AI-generated portrait for a demo user, or None when not fetched."""
+    if user_id not in _AVAIL_CACHE:
+        _AVAIL_CACHE[user_id] = _available(_AVATAR_ROOT, [user_id])
+    pool = _AVAIL_CACHE[user_id]
+    return pool[0] if pool else None

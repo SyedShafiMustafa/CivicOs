@@ -87,7 +87,7 @@ class DemoStore:
     def _user(self, uid: str) -> dict:
         return self.users.get(uid) or {
             "id": uid, "name": "Citizen", "first_name": "Citizen",
-            "email": "", "area": "", "initials": "CI",
+            "email": "", "area": "", "initials": "CI", "avatar_uri": None,
         }
 
     def _obs_ids(self, inc_id: str) -> list[str]:
@@ -97,6 +97,7 @@ class DemoStore:
         return ObservationOut(
             id=o["id"], user_id=o["user_id"],
             user_name=self._user(o["user_id"])["name"],
+            user_avatar_uri=self._user(o["user_id"]).get("avatar_uri"),
             image_uri=o["image_uri"], latitude=o["latitude"],
             longitude=o["longitude"], timestamp=o["timestamp"],
             issue_type=o["issue_type"], confidence=o["confidence"],
@@ -109,7 +110,7 @@ class DemoStore:
         distance = None
         if lat is not None and lng is not None:
             distance = round(clustering.haversine_m((lat, lng), (inc["latitude"], inc["longitude"])))
-        thumbnail = images.frame_data_uri(
+        thumbnail = images.photo_uri(
             inc["issue_type"], inc["id"]
         ) if obs else None
         return IncidentSummary(
@@ -545,7 +546,7 @@ class DemoStore:
             self._seq["verification"] += 1
             ver = {
                 "id": f"ver-{self._seq['verification']}", "resolution_id": resolution_id,
-                "after_image_uri": after_uri or images.frame_data_uri("after", resolution_id),
+                "after_image_uri": after_uri or images.photo_uri("after", resolution_id),
                 "result": ev["result"], "location_match": ev["location_match"],
                 "visual_match": ev["visual_match"], "rationale": ev["rationale"],
                 "created_at": self._now(), "verified_by": self._user(self._demo_user_id())["name"],
