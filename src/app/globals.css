@@ -33,6 +33,34 @@
   --font-body-var: var(--font-body);
 }
 
+/* ---- Night ledger: global dark theme ----------------------------------------
+   Same hues re-weighted for low light, exactly matching the prototype's
+   night palette. Applied via [data-theme="dark"] on <html>; toggles never
+   touch these values, they only flip the attribute. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #201e1b;
+  --panel: #26241f;
+  --well: #2e2b26;
+  --ink: #ece7dc;
+  --ink-soft: #c2bcae;
+  --ink-faint: #8b8578;
+  --rule: #3b3831;
+  --rule-strong: #514d43;
+  --accent: #5ea395; /* registration green, brightened for dark ground */
+  --accent-wash: #24352f;
+  --seal: #d47a63;
+  --seal-wash: #38291f;
+  --alert: #d0685f;
+  --alert-wash: #3a2724;
+  --warn: #d29a4b;
+  --warn-wash: #383021;
+  --hold: #bfa04e;
+  --hold-wash: #352f20;
+  --ok: #7db184;
+  --ok-wash: #253326;
+}
+
 html {
   background: var(--paper);
 }
@@ -43,6 +71,19 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Theme cross-fade: when the theme attribute flips, colors ease instead of
+   snapping. Transitioning custom properties is inherited by every surface
+   that uses them, so one rule re-inks the whole app smoothly. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-swap,
+  html.theme-swap body,
+  html.theme-swap .plate,
+  html.theme-swap .plate-ink,
+  html.theme-swap .plate-accent {
+    transition: background-color 0.28s ease, color 0.28s ease, border-color 0.28s ease;
+  }
 }
 
 /* Display serif helper — optical sizing lets Fraunces sharpen at headline
@@ -346,6 +387,17 @@ body {
   outline-offset: 2px;
 }
 
+/* ---- Reduced motion: collapse all decorative animation ----------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ---- Buttons: ink press physics ---------------------------------------------- */
 .btn-press {
   transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.12s ease, transform 0.08s ease;
@@ -370,27 +422,11 @@ body {
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @media (max-width: 429.98px) {
-  html[data-mobile-theme="dark"] {
-    color-scheme: dark;
-    /* Night ledger: warm charcoal paper, cream ink, same hues re-weighted */
-    --paper: #201e1b;
-    --panel: #26241f;
-    --well: #2e2b26;
-    --ink: #ece7dc;
-    --ink-soft: #c2bcae;
-    --ink-faint: #8b8578;
-    --rule: #3b3831;
-    --rule-strong: #514d43;
+  html[data-theme="dark"] {
     --glass-bg: rgba(30, 28, 26, 0.72);
     --glass-border: rgba(236, 231, 220, 0.16);
     --glass-highlight: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-    --accent-wash: #24352f;
-    --alert-wash: #3a2724;
-    --warn-wash: #383021;
-    --hold-wash: #352f20;
-    --ok-wash: #253326;
-    --seal-wash: #38291f;
   }
 }
 

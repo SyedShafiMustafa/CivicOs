@@ -13,6 +13,7 @@ import {
 import { timeAgo } from "@/lib/format";
 import { ActivityGlyph, GlyphSearch, GlyphClose } from "@/lib/glyphs";
 import { Avatar } from "@/components/ui/Avatar";
+import { useTheme } from "@/lib/useTheme";
 import { cn } from "@/lib/cn";
 
 export default function TopBar({ onMenu }: { onMenu: () => void }) {
@@ -22,6 +23,7 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
   const bellRef = useRef<HTMLDivElement>(null);
   const { data: me } = useApi(fetchMe, []);
   const { data: notifications, setData: setNotifications } = useApi(fetchNotifications, []);
+  const { theme, toggle } = useTheme();
   const unread = (notifications ?? []).filter((n) => !n.read).length;
 
   useEffect(() => {
@@ -77,6 +79,31 @@ export default function TopBar({ onMenu }: { onMenu: () => void }) {
           <span className="h-1.5 w-1.5 rotate-45 bg-ok" />
           Demo sheet · live data resets on restart
         </span>
+
+        {/* Day / night survey toggle */}
+        <button
+          onClick={toggle}
+          className="relative border border-transparent p-2 text-ink-soft hover:border-rule hover:bg-well hover:text-ink"
+          aria-label={theme === "dark" ? "Switch to day survey" : "Switch to night survey"}
+          title={theme === "dark" ? "Day survey" : "Night survey"}
+        >
+          {theme === "dark" ? (
+            /* day: surveyor sun — circle over the horizon rule */
+            <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square">
+              <circle cx="10" cy="10.5" r="3.2" />
+              <path d="M3 16h14" />
+              <path d="M10 3.2v2" />
+              <path d="M4.6 5.6l1.4 1.4" />
+              <path d="M15.4 5.6L14 7" />
+            </svg>
+          ) : (
+            /* night: surveyor moon over the horizon rule */
+            <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square">
+              <path d="M12.6 4.2a6 6 0 108.4 8.4" transform="translate(-4 1)" />
+              <path d="M3 16h14" />
+            </svg>
+          )}
+        </button>
 
         {/* Notifications */}
         <div className="relative" ref={bellRef}>

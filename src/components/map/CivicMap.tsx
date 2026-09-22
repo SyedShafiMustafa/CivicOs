@@ -89,6 +89,10 @@ export default function CivicMap({
       attributionControl: { compact: true },
       dragRotate: false,
       pitchWithRotate: false,
+      // Smoother feel: shorter marker fade, eased camera moves, and inertia
+      // that settles instead of coasting past the tap target.
+      fadeDuration: 120,
+      maxPitch: 0,
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     m.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");

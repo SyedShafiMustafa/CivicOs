@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { fetchMe, useApi } from "@/lib/api";
 import { Avatar } from "@/components/ui/Avatar";
+import { useTheme } from "@/lib/useTheme";
 import {
   Card,
   ErrorState,
@@ -56,6 +57,7 @@ function ConnectionCard() {
 
 export default function SettingsPage() {
   const { data: me } = useApi(fetchMe, []);
+  const { theme, setTheme } = useTheme();
   const [prefs, setPrefs] = useState({
     nearby: true,
     resolution: true,
@@ -96,6 +98,19 @@ export default function SettingsPage() {
               Home area: {me?.user.area ?? ""}
             </p>
           </div>
+        </div>
+      </Card>
+
+      {/* Display */}
+      <Card>
+        <SectionHead title="Display" sub="Light is for the field; dark is for the evening review." />
+        <div className="border-t border-rule px-5">
+          <Toggle
+            checked={theme === "dark"}
+            onChange={(v) => setTheme(v ? "dark" : "light")}
+            label="Night survey theme"
+            hint="Re-inks every sheet to the night ledger: charcoal paper, cream ink, brightened registration green."
+          />
         </div>
       </Card>
 

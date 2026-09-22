@@ -14,14 +14,15 @@
  *    scroll-progress hairline above it (iOS-style).
  *
  * Liquid glass is reserved for the surfaces the thumb touches; paper cards
- * stay hard-edged ink plates. Dark mode re-inks the paper via
- * [data-mobile-theme="dark"] on <html> (mobile media query in globals.css).
+ * stay hard-edged ink plates. Dark mode re-inks the paper via the shared
+ * global theme ([data-theme="dark"] on <html>, see lib/useTheme.ts).
  */
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { fetchIncident, fetchMe, fetchNotifications, useApi } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { useTheme } from "@/lib/useTheme";
 import { Avatar } from "@/components/ui/Avatar";
 import {
   GlyphLogomark,
@@ -86,7 +87,6 @@ export default function MobileShell({
   const [q, setQ] = useState("");
   const [chip, setChip] = useState<string | null>(null);
   const [fabOpen, setFabOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ----- framed mode: internal screen state instead of URL routes -----
@@ -116,14 +116,12 @@ export default function MobileShell({
     return () => mq.removeEventListener("change", on);
   }, [force]);
 
-  useLayoutEffect(() => {
-    const saved = window.localStorage.getItem("civicos-theme");
-    if (saved === "dark" || saved === "light") setTheme(saved);
-  }, []);
+  const { theme } = useTheme();
+  // The shared hook owns persistence + the <html> attribute; nothing to sync
+  // here beyond keeping any stale frame attribute cleared.
   useEffect(() => {
-    document.documentElement.setAttribute("data-mobile-theme", theme === "dark" ? "dark" : "");
-    return () => document.documentElement.setAttribute("data-mobile-theme", "");
-  }, [theme]);
+    document.documentElement.removeAttribute("data-mobile-theme");
+  }, []);
 
   // Inside the /mobile device frame, suppress the ambient shell chrome
   // (AppShell would otherwise render the desktop sidebar behind the frame).
@@ -340,13 +338,20 @@ export default function MobileShell({
         {force ? <div className="h-28" aria-hidden="true" /> : null}
       </div>
 
-      {/* ---------- Translucent scroll-progress hairline (iOS style) ---------- */}
+      {/* ---------- Translucent scroll-progress hairline (iOS style) ----------
+          Width updates on rAF via transform (never layout thrash); hidden
+          once the user reaches either end so it reads as an edge hint. */}
       {force ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[92px] z-40 flex justify-center">
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-[92px] z-40 flex justify-center transition-opacity duration-200",
+            scrollPct <= 0.5 || scrollPct >= 99.5 ? "opacity-0" : "opacity-100"
+          )}
+        >
           <div className="h-[3px] w-24 rounded-full bg-ink/25 backdrop-blur-sm" style={{ position: "relative", overflow: "hidden" }}>
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-ink/70"
-              style={{ width: `${scrollPct}%`, transition: "width .18s ease-out" }}
+              className="absolute inset-y-0 left-0 rounded-full bg-ink/70 will-change-transform"
+              style={{ transform: `scaleX(${scrollPct / 100})`, transformOrigin: "left", transition: "transform .15s linear" }}
             />
           </div>
         </div>
@@ -478,6 +483,17 @@ export default function MobileShell({
         <style>{`
           @media (max-width: 1023.98px) {
             body { padding-bottom: 84px; }
+          }
+        `}</style>
+      ) : null}
+      {force ? (
+        <style>{`
+          /* Frame is a self-contained scroll container: kill rubber-band at the
+             document level so only the sheet scrolls, and let taps respond at
+             touch speed instead of the 300ms legacy delay. */
+          html[data-framed-mobile] {
+            overflow: hidden;
+            touch-action: manipulation;
           }
         `}</style>
       ) : null}

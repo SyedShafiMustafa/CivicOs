@@ -10,9 +10,15 @@ export const metadata: Metadata = {
     "CIVICOS turns scattered citizen observations into verified, prioritized civic incidents, and verifies that reported problems were actually fixed.",
 };
 
+/** Applied pre-paint from localStorage so the theme never flashes. */
+const themeBoot = `try{var t=localStorage.getItem("civicos-theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${archivo.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${archivo.variable} ${plexMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
+      </head>
       <body>
         <ToastProvider>
           <AppShell>{children}</AppShell>

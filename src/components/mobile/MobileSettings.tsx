@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * Mobile settings sheet — includes the light/dark survey toggle. Dark mode is
- * a "night survey" variant: tokens are re-declared under the mobile media
- * query via [data-mobile-theme="dark"], so every mobile surface re-inks.
+ * Mobile settings sheet — includes the light/dark survey toggle, backed by
+ * the shared global theme hook so it stays in sync with every other toggle.
  */
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchMe, useApi } from "@/lib/api";
 import { Stamp, cn } from "@/components/ui/primitives";
 import { Avatar } from "@/components/ui/Avatar";
-
-const THEME_KEY = "civicos-theme";
+import { useTheme } from "@/lib/useTheme";
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -47,21 +45,12 @@ function Switch({ checked, onToggle, label }: { checked: boolean; onToggle: () =
 
 export default function MobileSettings() {
   const { data: me } = useApi(fetchMe, []);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const { theme, setTheme } = useTheme();
   const [haptics, setHaptics] = useState(true);
 
   useEffect(() => {
-    const saved = (localStorage.getItem(THEME_KEY) as "light" | "dark" | null) ?? "light";
-    setTheme(saved);
-    document.documentElement.dataset.mobileTheme = saved;
     setHaptics(localStorage.getItem("civicos-haptics") !== "off");
   }, []);
-
-  function applyTheme(t: "light" | "dark") {
-    setTheme(t);
-    localStorage.setItem(THEME_KEY, t);
-    document.documentElement.dataset.mobileTheme = t;
-  }
 
   return (
     <div className="px-3 pb-8 pt-4">
@@ -93,7 +82,7 @@ export default function MobileSettings() {
       <section className="plate mt-3 px-3.5 py-1" aria-label="Display">
         <div className="divide-y divide-rule">
           <Row label="Night survey" hint="Ink ground, paper text. Same records, different light.">
-            <Switch checked={theme === "dark"} onToggle={() => applyTheme(theme === "dark" ? "light" : "dark")} label="Night survey theme" />
+            <Switch checked={theme === "dark"} onToggle={() => setTheme(theme === "dark" ? "light" : "dark")} label="Night survey theme" />
           </Row>
           <Row label="Tactile feedback" hint="A short buzz on confirmations and errors.">
             <Switch
