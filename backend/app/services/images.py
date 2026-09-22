@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import pathlib
 
 W, H = 640, 400
 HORIZON = 235
@@ -507,10 +508,23 @@ def _local_url(root: tuple[str, str], name: str) -> str:
 
 
 def _available(root: tuple[str, str], names: list[str]) -> list[str]:
-    """Keep only names that actually resolve on the frontend host (dev or prod)."""
+    """Keep only names that actually resolve on the frontend host (dev or prod).
+
+    A name "resolves" when the file exists in this repo's public/ tree (the
+    single source of truth — all hosts serve it) or, when ASSET_ORIGIN points
+    at a deployed frontend, when that origin answers 200. The HEAD probe is
+    skipped for the repo-relative default so startup never blocks on network.
+    """
     out: list[str] = []
+    repo_public = pathlib.Path(__file__).resolve().parents[3] / "public"
     for n in names:
         url = _local_url(root, n)
+        local_path = repo_public / root[1].strip("/") / f"{n}.jpg"
+        if local_path.exists():
+            out.append(url)
+            continue
+        if root[0].startswith("http://localhost"):
+            continue
         try:
             req = urllib.request.Request(url, method="HEAD")
             with urllib.request.urlopen(req, timeout=2) as r:

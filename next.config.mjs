@@ -15,28 +15,41 @@
  *
  * Root rewrites (previously Edge middleware — incompatible with Vercel's
  * services platform):
- *   - Vercel production: the deployment serves the field-survey phone
- *     prototype, so "/" renders /mobile.
- *   - Local prototype hosts: "/" rewrites to /ios on :3001 and /mobile on
- *     :3002, keeping the address bar clean. Deep links are unaffected.
+ *   - CIVICOS_ROOT picks which prototype the root path serves. Vercel
+ *     production takes it from project env (civicos → /mobile, civicos-ios
+ *     → /ios); local prototype hosts from the port. These MUST live in
+ *     beforeFiles — plain rewrites run after filesystem matching, so "/"
+ *     would keep rendering the desktop page.tsx.
+ *   - Deep links are unaffected.
  */
 const isVercel = !!process.env.VERCEL;
+// CIVICOS_ROOT selects the prototype served at "/" (e.g. "/ios", "/mobile").
+// Git-Bash on Windows mangles a leading "/" env value into a drive path
+// (C:/Program Files/Git/ios) — sanitize so a mangled value can't brick the
+// build; on Vercel's Linux builders the value arrives intact.
+const rawRoot = (process.env.CIVICOS_ROOT || "").replace(/^[A-Za-z]:[\\/](Program Files[\\/])?Git[\\/]/, "");
+const rootDest =
+  rawRoot === "/ios" || rawRoot === "/mobile"
+    ? rawRoot
+    : isVercel
+      ? "/mobile"
+      : null;
 
 const nextConfig = {
   reactStrictMode: true,
   distDir: process.env.CIVICOS_DIST || ".next",
   async rewrites() {
-    if (isVercel) {
-      return [
-        { source: "/", destination: "/mobile" },
-      ];
-    }
-    return [
-      { source: "/", has: [{ type: "host", value: "localhost:3001" }], destination: "/ios" },
-      { source: "/", has: [{ type: "host", value: "127.0.0.1:3001" }], destination: "/ios" },
-      { source: "/", has: [{ type: "host", value: "localhost:3002" }], destination: "/mobile" },
-      { source: "/", has: [{ type: "host", value: "127.0.0.1:3002" }], destination: "/mobile" },
-    ];
+    const before = rootDest ? [{ source: "/", destination: rootDest }] : [];
+    if (isVercel) return { beforeFiles: before };
+    return {
+      beforeFiles: before,
+      afterFiles: [
+        { source: "/", has: [{ type: "host", value: "localhost:3001" }], destination: "/ios" },
+        { source: "/", has: [{ type: "host", value: "127.0.0.1:3001" }], destination: "/ios" },
+        { source: "/", has: [{ type: "host", value: "localhost:3002" }], destination: "/mobile" },
+        { source: "/", has: [{ type: "host", value: "127.0.0.1:3002" }], destination: "/mobile" },
+      ],
+    };
   },
 };
 
